@@ -24,6 +24,9 @@ class PositionEnum(str, Enum):
 # === Stat Line Models ===
 class StatLineBase(SQLModel):
     date: datetime.date
+    team: str
+    opponent: str
+    season: str
     fgm: int = Field(default=0)
     fga: int = Field(default=0)
     fg_pct: float = Field(default=0.0)
@@ -52,9 +55,6 @@ class StatLine(StatLineBase, table=True):
     
     # Relationships
     player_id: Optional[UUID] = Field(default=None, foreign_key="players.id")
-    game_id: Optional[UUID] = Field(default=None, foreign_key="games.id")
-    season_id: Optional[UUID] = Field(default=None, foreign_key="seasons.id")
-    team_id: Optional[UUID] = Field(default=None, foreign_key="teams.id")
     
 class StatLineCreate(StatLineBase):
     pass
@@ -83,40 +83,15 @@ class StatLineUpdate(SQLModel):
     stl: Optional[int] = None
     pts: Optional[int] = None 
 
-
-# === Player Models ===
-class TeamBase(SQLModel):
-    name: str = Field(default=None, unique=True)
-
     
-class Team(TeamBase, table=True):
-    __tablename__ = "teams"
-    
-    id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
-    created_on: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    
-    # Relationships
-    players: Optional[List["Player"]] = Relationship(back_populates="team")
-    stats: Optional[List["StatLine"]] = Relationship()
-
-class TeamCreate(TeamBase):
-    pass
-
-class TeamRead(TeamBase):
-    id: UUID
-
-class TeamUpdate(SQLModel):
-    name: Optional[str] = None
-
 # === Player Models ===
 class PlayerBase(SQLModel):
-    full_name: str 
+    full_name: str = Field(default=None, unique=True) 
     class_name: ClassEnum 
     position: PositionEnum 
     height: str
     weight: str
-    hometown_hs:str
+    hometown_hs:str = Field(default=None, unique=True)
     jersey_num: int
     
 class Player(PlayerBase, table=True):
@@ -127,12 +102,10 @@ class Player(PlayerBase, table=True):
     last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
     
     # Relationships
-    team_id: Optional[UUID]  = Field(default=None, foreign_key="teams.id")
-    team: Optional[Team] = Relationship(back_populates='players')
     stats: Optional[List["StatLine"]] = Relationship()
 
 class PlayerCreate(PlayerBase):
-    team_name: str       
+    id: UUID   
 
 class PlayerRead(PlayerBase):
     id: UUID       
@@ -145,57 +118,6 @@ class PlayerUpdate(SQLModel):
     weight: Optional[str] = None
     hometown_hs:Optional[str] = None
     jersey_num: Optional[int] = None
-
-# === Season Models ===
-class SeasonBase(SQLModel):
-    start_year: int
-    end_year: int
-    
-class Season(SeasonBase, table=True):
-    __tablename__ = "seasons"
-    
-    id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
-    created_on: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    
-    # Relationship
-    stats: Optional[List["StatLine"]] = Relationship()
-    
-class SeasonCreate(SeasonBase):
-    pass
-
-class SeasonRead(SeasonBase):
-    id: UUID
-
-class SeasonUpdate(SQLModel):
-    start_year: Optional[int] = None
-    end_year: Optional[int] = None
-
-# === Game Models ===   
-class GameBase(SQLModel):
-    date: datetime.date
-    
-class Game(GameBase, table=True):
-    __tablename__ = "games"
-    
-    id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
-    created_on: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    
-    # Relationships
-    team1_id: Optional[UUID] = Field(default=None, foreign_key="teams.id")
-    team2_id: Optional[UUID] = Field(default=None, foreign_key="teams.id")
-    stats: Optional[List["StatLine"]] = Relationship()
-
-class GameCreate(GameBase):
-    team_1: str
-    team_2: str
-
-class GameRead(GameBase):
-    id: UUID
-
-class GameUpdate(SQLModel):
-    date: Optional[datetime.date] = None
 
 # === Game Stats Model ===   
 class GameStatBase(SQLModel):
@@ -284,26 +206,7 @@ class GameStatRead(GameStatBase):
     id: UUID
     
 # === Relational Model Views ===
-
-class PlayerReadWithTeam(PlayerRead):
-    team: Optional[TeamRead] = None
-    
-class TeamReadWithPlayers(TeamRead):
-    players: Optional[List[PlayerRead]] = []
-
-class GamesReadWithTeams(GameRead):
-    team1_id: Optional[TeamRead] = None
-    team2_id: Optional[TeamRead] = None
-
-class StatLineReadWithPlayerAndTeam(StatLineRead):
-    game_id: Optional[GameRead] = None
-    player_id: Optional[PlayerRead] = None
-    
+class StatLineReadWithPlayer(StatLineRead):
+    player_id: Optional[PlayerRead] = None    
 class PlayerWithStatLines(PlayerRead):
-    stats: Optional[List[StatLineRead]] = []
-class TeamWithStatLines(TeamRead):
-    stats: Optional[List[StatLineRead]] = []
-class SeasonWithStatLines(SeasonRead):
-    stats: Optional[List[StatLineRead]] = []
-class GameWithStatLines(GameRead):
     stats: Optional[List[StatLineRead]] = []

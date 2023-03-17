@@ -25,14 +25,14 @@ def root():
         "LastUpdated": "2023-02-16"
         }
 
-# === Players Endpoint ===
+#region Player
 
 @app.get("/players/")
 def read_players(*, session: Session = Depends(get_session)):
     players = session.exec(select(Player)).all()
     return players
     
-@app.get("/players/{player_id}", response_model=PlayerReadWithTeam)
+@app.get("/players/{player_id}", response_model=PlayerRead)
 def read_player(*, session: Session = Depends(get_session), player_id: UUID):
     player = session.get(Player, player_id)
     if not player:
@@ -41,14 +41,7 @@ def read_player(*, session: Session = Depends(get_session), player_id: UUID):
     
 @app.post('/players/', response_model=PlayerRead)
 def create_player(*, session: Session = Depends(get_session), player: PlayerCreate):
-    statement = select(Team).where(Team.name == player.team_name)
-    team = session.scalars(statement).first()
-    
-    if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
-    
     db_player = Player.from_orm(player)
-    db_player.team_id = team.id
     session.add(db_player)
     session.commit()
     session.refresh(db_player)
@@ -67,132 +60,37 @@ def update_player(*, session: Session = Depends(get_session),player_id: UUID, pl
     session.commit()
     session.refresh(db_player)
     return db_player
+#endregion Player
 
-# === Teams Endpoint ===
+#region Team
 @app.get("/teams/")
 def read_team(*, session: Session = Depends(get_session)):
-    teams = session.exec(select(Team)).all()
+    teams = session.exec(select(StatLine.opponent).distinct()).all()
     return teams
+#endregion Team
 
-@app.get("/teams/{team_id}", response_model=TeamReadWithPlayers)
-def read_team(*, session: Session = Depends(get_session), team_id: UUID):
-    team = session.get(Team, team_id)
-    if not team:
-        raise HTTPException(status_code=404, detail="Team not found")
-    return team
-
-@app.post('/teams/', response_model=TeamRead)
-def create_team(*, session: Session = Depends(get_session), team: TeamCreate):
-    db_team = Team.from_orm(team)
-    session.add(db_team)
-    session.commit()
-    session.refresh(db_team)
-    return db_team
-
-@app.patch("/teams/{team_id}", response_model=TeamRead)
-def update_team(*, session: Session = Depends(get_session),team_id: UUID, team: TeamUpdate):
-    db_team = session.get(Team, team_id)
-    if not db_team:
-        raise HTTPException(status_code=404, detail="Team not found")
-    team_data = team.dict(exclude_unset=True)
-    for key, value in team_data.items():
-        setattr(db_team, key, value)
-    db_team.last_modified = datetime.datetime.utcnow()
-    session.add(db_team)
-    session.commit()
-    session.refresh(db_team)
-    return db_team
-
-# === Games Endpoint ===
+#region Games
 @app.get("/games/")
 def read_games(*, session: Session = Depends(get_session)):
-    teams = session.exec(select(Game)).all()
-    return teams
+    games = session.exec(select(StatLine.date, StatLine.team, StatLine.opponent).distinct(StatLine.date)).all()
+    return games
+#endregion Games
 
-@app.get("/games/{game_id}", response_model=GamesReadWithTeams)
-def read_game(*, session: Session = Depends(get_session), game_id: UUID):
-    game = session.get(Game, game_id)
-    if not game:
-        raise HTTPException(status_code=404, detail="Game not found")
-    return game
-
-@app.post('/games/', response_model=GameRead)
-def create_game(*, session: Session = Depends(get_session), game: GameCreate):
-    
-    query_team_1 = select(Team.id).where(Team.name == game.team_1)
-    query_team_2 = select(Team.id).where(Team.name == game.team_2)
-    
-    team_1 = session.exec(query_team_1).first()
-    team_2 = session.exec(query_team_2).first()
-    
-    if not team_1 and not team_2:
-        raise HTTPException(status_code=404, detail="Team not found")
-    
-    db_game = Game.from_orm(game)
-    db_game. team1_id = team_1
-    db_game. team2_id = team_2
-    session.add(db_game)
-    session.commit()
-    session.refresh(db_game)
-    return db_game
-
-@app.patch("/games/{game_id}", response_model=GameRead)
-def update_game(*, session: Session = Depends(get_session),game_id: UUID, game: GameUpdate):
-    db_game = session.get(Game, game_id)
-    if not db_game:
-        raise HTTPException(status_code=404, detail="Game not found")
-    game_data = game.dict(exclude_unset=True)
-    for key, value in game_data.items():
-        setattr(db_game, key, value)
-    db_game.last_modified = datetime.datetime.utcnow()
-    session.add(db_game)
-    session.commit()
-    session.refresh(db_game)
-    return db_game
-
-
-# === Seasons Endpoint ===
+#region Seasons
 @app.get("/seasons/")
 def read_seasons(*, session: Session = Depends(get_session)):
-    seasons = session.exec(select(Season)).all()
+    seasons = session.exec(select(StatLine.season).distinct()).all()
     return seasons
 
-@app.get("/seasons/{season_id}", response_model=SeasonRead)
-def read_season(*, session: Session = Depends(get_session), season_id: UUID):
-    season = session.get(Season, season_id)
-    if not season:
-        raise HTTPException(status_code=404, detail="Season not found")
-    return season
+#endregion Seasons
 
-@app.post('/seasons/', response_model=SeasonRead)
-def create_season(*, session: Session = Depends(get_session), season: SeasonCreate):
-    db_season = Season.from_orm(season)
-    session.add(db_season)
-    session.commit()
-    session.refresh(db_season)
-    return db_season
-
-@app.patch("/seasons/{season_id}", response_model=SeasonRead)
-def update_season(*, session: Session = Depends(get_session),season_id: UUID, season: SeasonUpdate):
-    db_season = session.get(season, season_id)
-    if not db_season:
-        raise HTTPException(status_code=404, detail="Season not found")
-    season_data = season.dict(exclude_unset=True)
-    for key, value in season_data.items():
-        setattr(db_season, key, value)
-    db_season.last_modified = datetime.datetime.utcnow()
-    session.add(db_season)
-    session.commit()
-    session.refresh(db_season)
-    return db_season
-
-# === Stat Lines Endpoint ===
-@app.get("/statlines/")
+#region Stats
+@app.get("/stats/")
 def read_statline(*, session: Session = Depends(get_session)):
     teams = session.exec(select(StatLine)).all()
     return teams
 
-@app.post('/statlines/', response_model=StatLineRead)
+@app.post('/stats/', response_model=StatLineRead)
 def create_statline(*, session: Session = Depends(get_session), statline: StatLineCreate):
     db_statline = StatLine.from_orm(statline)
     session.add(db_statline)
@@ -200,7 +98,7 @@ def create_statline(*, session: Session = Depends(get_session), statline: StatLi
     session.refresh(db_statline)
     return db_statline
 
-@app.patch("/statlines/{statline_id}", response_model=StatLineRead)
+@app.patch("/stats/{statline_id}", response_model=StatLineRead)
 def update_statline(*, session: Session = Depends(get_session),statline_id: UUID, statline: StatLineUpdate):
     db_statline = session.get(StatLine, statline_id)
     if not db_statline:
@@ -213,8 +111,9 @@ def update_statline(*, session: Session = Depends(get_session),statline_id: UUID
     session.commit()
     session.refresh(db_statline)
     return db_statline
+#endregion Stats
 
-# === Game Stats Endpoint ===
+#region Game Stats
 @app.get("/gamestats/")
 def read_gamestats(*, session: Session = Depends(get_session)):
     gamestats = session.exec(select(GameStat)).all()
@@ -240,7 +139,7 @@ def create_gamestat(*, gamestat: GameStatCreate, session: Session = Depends(get_
     session.commit()
     session.refresh(db_gamestat)
     return db_gamestat
-
+#endregion Game Stats
 
 # === Stat Endpoints ===
 """ 
