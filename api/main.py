@@ -141,27 +141,29 @@ def create_gamestat(*, gamestat: GameStatCreate, session: Session = Depends(get_
     return db_gamestat
 #endregion Game Stats
 
-# === Stat Endpoints ===
+#region Entity Stat Endpoints
 """ 
-Want to follow the syntax of /{entity}/{entity.id}/stats
+Want to follow the syntax of /stats/{entity}/{entity.id}
 That way we can get the data of an individual player, team, game, season but for the entity
-For example /players/2/stats will return all the statlines for the player with the matching ID
+For example /stats/players/2 will return all the statlines for the player with the matching ID
 Can let the front end handle the aggregation and math. That should hopefully reduce the need for any 
 preprocessing or query strings in the URL.
 """
 
-# @app.get("/players/{player_id}/stats", response_model=PlayerWithStatLines)
+# @app.get("/stats/players/{player_id}", response_model=PlayerWithStatLines)
 # def get_players_stats(*, session: Session = Depends(get_session), player_id: UUID):
 #     pass
 
-# @app.get("/teams/{team_id}/stats", response_model=TeamWithStatLines)
+# @app.get("/stats/teams/{team_id}", response_model=TeamWithStatLines)
 # def get_teams_stats(*, session: Session = Depends(get_session), team_id: UUID):
 #     pass
 
-# @app.get("/seasons/{season_id}/stats", response_model=SeasonWithStatLines)
+# @app.get("/stats/seasons/{season_id}", response_model=SeasonWithStatLines)
 # def get_seasons_stats(*, session: Session = Depends(get_session), season_id: UUID):
 #     pass
 
-# @app.get("/games/{game_id}/stats", response_model=GameWithStatLines)
+# @app.get("/stats/games/{game_id}", response_model=GameWithStatLines)
 # def get_games_stats(*, session: Session = Depends(get_session), game_id: UUID):
 #     pass
+
+#endregion Entity Stat Endpoints
