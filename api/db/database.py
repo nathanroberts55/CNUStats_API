@@ -1,7 +1,7 @@
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import SQLModel, Session, select, create_engine
 from .models import *
 import random
-from datetime import date
+from datetime import date, timedelta
 # UIsing SQLite here but can easily use PostgreSQL by changing the url
 sqlite_file_name = "db.sqlite3"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -18,6 +18,7 @@ def create_db_and_tables():
 def create_test_data():
     session = Session(engine)
     
+    
     opponents = [
         'Mary Washington',
         'Marymount University',
@@ -29,11 +30,73 @@ def create_test_data():
         'Lynchburg University'
         ]
     
-    for i in range(50):
-        game_date = date.today()
+    # Create Players 
+    player_ids = session.execute(select(Player.id)).all()
+    
+    if not player_ids:
+        player_1 = Player(
+            full_name = "Nathan Roberts",
+            class_name = "Sr.",
+            position = "C",
+            height = "6'8",
+            weight = "230",
+            hometown_hs = "Fairfax, VA | Fairfax HS",
+            jersey_num = 0
+        )
+        session.add(player_1)
+        player_2 = Player(
+            full_name = "Tyler Femi",
+            class_name = "Sr.",
+            position = "PG",
+            height = "6'1",
+            weight = "215",
+            hometown_hs = "Chantilly, VA | Chantilly HS",
+            jersey_num = 10
+        )
+        session.add(player_2)
+        player_3 = Player(
+            full_name = "Spencer Marin",
+            class_name = "Sr.",
+            position = "C",
+            height = "6'9",
+            weight = "230",
+            hometown_hs = "Springfield, VA | West Springfield HS",
+            jersey_num = 14
+        )
+        session.add(player_3)
+        player_4 = Player(
+            full_name = "Tim Daly",
+            class_name = "Sr.",
+            position = "C",
+            height = "6'6",
+            weight = "230",
+            hometown_hs = "Midlothian, VA | James River HS",
+            jersey_num = 44
+        )
+        session.add(player_4)
+        player_5 = Player(
+            full_name = "Ben Watkins",
+            class_name = "Sr.",
+            position = "C",
+            height = "6'7",
+            weight = "230",
+            hometown_hs = "Richmond, VA | Colonial Forge HS",
+            jersey_num = 52
+        )
+        session.add(player_5)
+        
+        session.commit()
+        
+        # Get the Players ID's
+        player_ids = session.execute(select(Player.id)).all()
+    
+    # Create Stats for the Players
+    for i in (range(100)):
+        year = random.randint(2012, 2022)
+        game_date = date.today() - timedelta(days=i)
         rand_team = "Christopher Newport University"
         rand_opponent = opponents[random.randint(0, 7)]
-        season = "2021-2022"
+        season = f"{year}-{year+1}"
         fgm = random.randint(0, 20)
         fga = random.randint(1, 20)
         fg_pct = fgm/fga
@@ -52,6 +115,8 @@ def create_test_data():
         blk = random.randint(0, 7)
         stl = random.randint(0, 7)
         pts = random.randint(0, 45)
+        player_num = random.randint(0,4)
+        player_id = player_ids[player_num][0]
         
         stat = StatLine(
             date = game_date,
@@ -75,7 +140,8 @@ def create_test_data():
             to = to,
             blk = blk,
             stl = stl,
-            pts = pts
+            pts = pts,
+            player_id=player_id
         )
         
         session.add(stat)
