@@ -1,8 +1,17 @@
 from typing import Union
 from db.models import *
-from db.database import engine, create_db_and_tables
+from db.database import engine, create_db_and_tables, create_test_data
 from sqlmodel import Session, select
 from fastapi import FastAPI, HTTPException, Depends
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+
+dotenv_path = '..\.env'
+load_dotenv(dotenv_path)
+    
+ENVIRONMENT = os.environ.get("ENVIRONMENT")
 
 def get_session():
     with Session(engine) as session:
@@ -15,6 +24,12 @@ app = FastAPI()
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    
+    if ENVIRONMENT == "local":
+        print("Loading Test Data...")
+        create_test_data()
+    
+    
     
 # === API Information ===
 @app.get("/")

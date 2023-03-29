@@ -91,7 +91,7 @@ class PlayerBase(SQLModel):
     position: PositionEnum 
     height: str
     weight: str
-    hometown_hs:str = Field(default=None, unique=True)
+    hometown_hs:str
     jersey_num: int
     
 class Player(PlayerBase, table=True):
@@ -105,7 +105,7 @@ class Player(PlayerBase, table=True):
     stats: Optional[List["StatLine"]] = Relationship()
 
 class PlayerCreate(PlayerBase):
-    id: UUID   
+    pass  
 
 class PlayerRead(PlayerBase):
     id: UUID       
