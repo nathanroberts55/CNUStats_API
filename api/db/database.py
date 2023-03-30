@@ -91,61 +91,62 @@ def create_test_data():
         player_ids = session.execute(select(Player.id)).all()
     
     # Create Stats for the Players
-    for i in (range(100)):
-        year = random.randint(2012, 2022)
-        game_date = date.today() - timedelta(days=i)
-        rand_team = "Christopher Newport University"
-        rand_opponent = opponents[random.randint(0, 7)]
-        season = f"{year}-{year+1}"
-        fgm = random.randint(0, 20)
-        fga = random.randint(1, 20)
-        fg_pct = fgm/fga
-        three_fgm = random.randint(0, 10)
-        three_fga = random.randint(1, 10)
-        three_pt_pct = three_fgm/three_fga
-        ftm = random.randint(0, 10)
-        fta = random.randint(1, 10)
-        ft_pct = ftm/fta
-        off_reb = random.randint(0, 7)
-        def_reb = random.randint(0, 7)
-        tot_reb = random.randint(0, 7)
-        pf = random.randint(0, 5)
-        ast = random.randint(0, 7)
-        to = random.randint(0, 7)
-        blk = random.randint(0, 7)
-        stl = random.randint(0, 7)
-        pts = random.randint(0, 45)
-        player_num = random.randint(0,4)
-        player_id = player_ids[player_num][0]
-        
-        stat = StatLine(
-            date = game_date,
-            team = rand_team,
-            opponent = rand_opponent,
-            season = season,
-            fgm = fgm,
-            fga = fga,
-            fg_pct = fg_pct,
-            three_fgm = three_fgm,
-            three_fga = three_fga,
-            three_pt_pct = three_pt_pct,
-            ftm = ftm,
-            fta = fta,
-            ft_pct = ft_pct,
-            off_reb = off_reb,
-            def_reb = def_reb,
-            tot_reb = tot_reb,
-            pf = pf,
-            ast = ast,
-            to = to,
-            blk = blk,
-            stl = stl,
-            pts = pts,
-            player_id=player_id
-        )
-        
-        session.add(stat)
-    session.commit()
+    if not session.execute(select(StatLine.id)).all():
+        for i in (range(100)):
+            year = random.randint(2012, 2022)
+            game_date = date.today() - timedelta(days=i)
+            rand_team = "Christopher Newport University"
+            rand_opponent = opponents[random.randint(0, 7)]
+            season = f"{year}-{year+1}"
+            fgm = random.randint(0, 15)
+            fga = random.randint(15, 30)
+            fg_pct = fgm/fga
+            three_fgm = random.randint(0, 8)
+            three_fga = random.randint(8, 20)
+            three_pt_pct = three_fgm/three_fga
+            ftm = random.randint(0, 8)
+            fta = random.randint(8, 20)
+            ft_pct = ftm/fta
+            off_reb = random.randint(0, 7)
+            def_reb = random.randint(0, 7)
+            tot_reb = random.randint(0, 7)
+            pf = random.randint(0, 5)
+            ast = random.randint(0, 7)
+            to = random.randint(0, 7)
+            blk = random.randint(0, 7)
+            stl = random.randint(0, 7)
+            pts = random.randint(0, 45)
+            player_num = random.randint(0,4)
+            player_id = player_ids[player_num][0]
+            
+            stat = StatLine(
+                date = game_date,
+                team = rand_team,
+                opponent = rand_opponent,
+                season = season,
+                fgm = fgm,
+                fga = fga,
+                fg_pct = fg_pct,
+                three_fgm = three_fgm,
+                three_fga = three_fga,
+                three_pt_pct = three_pt_pct,
+                ftm = ftm,
+                fta = fta,
+                ft_pct = ft_pct,
+                off_reb = off_reb,
+                def_reb = def_reb,
+                tot_reb = tot_reb,
+                pf = pf,
+                ast = ast,
+                to = to,
+                blk = blk,
+                stl = stl,
+                pts = pts,
+                player_id=player_id
+            )
+            
+            session.add(stat)
+        session.commit()
     
     
 if __name__ == '__main__':
