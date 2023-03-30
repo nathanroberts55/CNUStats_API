@@ -1,26 +1,30 @@
-from typing import List, Optional
+from typing import List, Set, Optional
 from uuid import UUID, uuid4
 import datetime
 from enum import Enum, IntEnum
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
+
 
 # === Choices as Enums ===
 class ClassEnum(str, Enum):
-    freshman = 'Fr.'
-    sophomore = 'So.'
-    junior = 'Jr.'
-    senior = 'Sr.'
-    graduate = 'Gr.'
-    
+    freshman = "Fr."
+    sophomore = "So."
+    junior = "Jr."
+    senior = "Sr."
+    graduate = "Gr."
+
+
 class PositionEnum(str, Enum):
-    point_guard = 'PG'
-    shooting_guard = 'SG'
-    small_forward = 'SF'
-    power_forward = 'PF'
-    center = 'C'
+    point_guard = "PG"
+    shooting_guard = "SG"
+    small_forward = "SF"
+    power_forward = "PF"
+    center = "C"
+
 
 # === Models ===
-   
+
+
 # === Stat Line Models ===
 class StatLineBase(SQLModel):
     date: datetime.date
@@ -45,23 +49,27 @@ class StatLineBase(SQLModel):
     blk: int = Field(default=0)
     stl: int = Field(default=0)
     pts: int = Field(default=0)
-    
+
+
 class StatLine(StatLineBase, table=True):
     __tablename__ = "statLines"
-    
+
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     created_on: datetime.datetime = Field(default=datetime.datetime.utcnow())
     last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    
+
     # Relationships
     player_id: Optional[UUID] = Field(default=None, foreign_key="players.id")
-    
+
+
 class StatLineCreate(StatLineBase):
     pass
-    
+
+
 class StatLineRead(StatLineBase):
     id: UUID
-    
+
+
 class StatLineUpdate(SQLModel):
     date: Optional[datetime.date] = None
     fgm: Optional[int] = None
@@ -81,45 +89,51 @@ class StatLineUpdate(SQLModel):
     to: Optional[int] = None
     blk: Optional[int] = None
     stl: Optional[int] = None
-    pts: Optional[int] = None 
+    pts: Optional[int] = None
 
-    
+
 # === Player Models ===
 class PlayerBase(SQLModel):
-    full_name: str = Field(default=None, unique=True) 
-    class_name: ClassEnum 
-    position: PositionEnum 
+    full_name: str
+    class_name: ClassEnum
+    position: PositionEnum
     height: str
     weight: str
-    hometown_hs:str
+    hometown_hs: str
     jersey_num: int
-    
+
+
 class Player(PlayerBase, table=True):
     __tablename__ = "players"
-    
-    id: Optional[UUID]  = Field(default_factory=uuid4, primary_key=True)
+    __table_args__ = (UniqueConstraint("full_name", "hometown_hs"),)
+
+    id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     created_on: datetime.datetime = Field(default=datetime.datetime.utcnow())
     last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    
+
     # Relationships
     stats: Optional[List["StatLine"]] = Relationship()
 
+
 class PlayerCreate(PlayerBase):
-    pass  
+    pass
+
 
 class PlayerRead(PlayerBase):
-    id: UUID       
-    
+    id: UUID
+
+
 class PlayerUpdate(SQLModel):
     full_name: Optional[str] = None
     class_name: Optional[ClassEnum] = None
     position: Optional[PositionEnum] = None
     height: Optional[str] = None
     weight: Optional[str] = None
-    hometown_hs:Optional[str] = None
+    hometown_hs: Optional[str] = None
     jersey_num: Optional[int] = None
 
-# === Game Stats Model ===   
+
+# === Game Stats Model ===
 class GameStatBase(SQLModel):
     three_fga: int
     three_fga_diff: int
@@ -191,22 +205,28 @@ class GameStatBase(SQLModel):
     weekday: int
     win: int
     year: int
-     
+
+
 class GameStat(GameStatBase, table=True):
     __tablename__ = "gamestats"
-    
+
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     created_on: datetime.datetime = Field(default=datetime.datetime.utcnow())
     last_modified: datetime.datetime = Field(default=datetime.datetime.utcnow())
-    
+
+
 class GameStatCreate(GameStatBase):
     pass
 
+
 class GameStatRead(GameStatBase):
     id: UUID
-    
+
+
 # === Relational Model Views ===
 class StatLineReadWithPlayer(StatLineRead):
-    player_id: Optional[PlayerRead] = None    
+    player_id: Optional[PlayerRead] = None
+
+
 class PlayerWithStatLines(PlayerRead):
     stats: Optional[List[StatLineRead]] = []
